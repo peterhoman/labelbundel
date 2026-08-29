@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bundelt losse verzendlabel-PDF's tot één PDF: alles rechtop, meerdere labels per pagina, dubbele en Same-day labels eruit.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%B7%3C/text%3E%3C/svg%3E">
+<style>
+  :root{color-scheme:light dark}
+  html,body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none !important}
+</style>
+<title>Labelbundel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<style>
+:root{
+  --paper:#fcfcfb; --card:#ffffff; --card-2:#f6f6f4;
+  --ink:#16181d; --ink-2:#3d434e; --muted:#767d8a;
+  --line:#e3e3df; --line-strong:#c9c9c3;
+  --accent:#d24a06; --accent-ink:#ffffff; --accent-soft:#fbeee6;
+  --ok:#1c6b3f; --ok-soft:#e9f3ec; --ok-line:#bcdcc7;
+  --warn:#8a5a00;
+  --sameday:#1c4f8a; --sameday-soft:#e7eff8;
+  --dub:#8a5a00; --dub-soft:#f7efdd;
+  --r:10px;
+  --shadow:0 1px 2px rgba(20,22,26,.05), 0 6px 20px -12px rgba(20,22,26,.25);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101215; --card:#181b1f; --card-2:#1e2227;
+    --ink:#eceef1; --ink-2:#bcc2cb; --muted:#868d99;
+    --line:#2b2f35; --line-strong:#3d434b;
+    --accent:#ff7c37; --accent-ink:#1d0e05; --accent-soft:#2b1b11;
+    --ok:#86dda6; --ok-soft:#15271c; --ok-line:#2c4a37;
+    --warn:#e0b25e;
+    --sameday:#8fbcea; --sameday-soft:#14212f;
+    --dub:#e0b25e; --dub-soft:#2c2313;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101215; --card:#181b1f; --card-2:#1e2227;
+  --ink:#eceef1; --ink-2:#bcc2cb; --muted:#868d99;
+  --line:#2b2f35; --line-strong:#3d434b;
+  --accent:#ff7c37; --accent-ink:#1d0e05; --accent-soft:#2b1b11;
+  --ok:#86dda6; --ok-soft:#15271c; --ok-line:#2c4a37;
+  --warn:#e0b25e;
+  --sameday:#8fbcea; --sameday-soft:#14212f;
+  --dub:#e0b25e; --dub-soft:#2c2313;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:780px; margin:0 auto; padding:40px 20px 72px; display:flex; flex-direction:column; gap:26px}
+
+/* ---------- kop ---------- */
+header{display:flex; flex-direction:column; gap:10px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted);
+}
+h1{
+  font-family:Archivo,"IBM Plex Sans",sans-serif; font-weight:700;
+  font-size:clamp(30px,5.4vw,42px); line-height:1.05; margin:0;
+  letter-spacing:-.02em; text-wrap:balance;
+}
+.barcode{
+  height:16px; width:100%; max-width:230px; opacity:.85;
+  background-image:repeating-linear-gradient(90deg,
+    var(--ink) 0 2px, transparent 2px 5px, var(--ink) 5px 6px, transparent 6px 10px,
+    var(--ink) 10px 13px, transparent 13px 15px, var(--ink) 15px 16px, transparent 16px 21px);
+}
+.lead{margin:0; color:var(--ink-2); max-width:56ch}
+
+/* ---------- kaarten ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  box-shadow:var(--shadow);
+}
+.card-pad{padding:20px}
+.card-title{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin:0 0 14px;
+}
+
+/* ---------- dropzone ---------- */
+#drop{
+  border:2px dashed var(--line-strong); border-radius:var(--r);
+  background:var(--card); padding:34px 20px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  transition:border-color .15s ease, background-color .15s ease;
+}
+#drop.hot{border-color:var(--accent); background:var(--accent-soft)}
+#drop p{margin:0; color:var(--ink-2)}
+#drop .big{font-family:Archivo,sans-serif; font-weight:600; font-size:19px; color:var(--ink)}
+.btnrow{display:flex; flex-wrap:wrap; gap:10px; justify-content:center}
+
+button{
+  font:inherit; font-weight:500; cursor:pointer; border-radius:8px;
+  border:1px solid var(--line-strong); background:var(--card-2); color:var(--ink);
+  padding:9px 16px; transition:background-color .12s ease, border-color .12s ease;
+}
+button:hover{border-color:var(--ink-2)}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button:disabled{opacity:.45; cursor:not-allowed}
+button.primary{
+  background:var(--accent); border-color:var(--accent); color:var(--accent-ink);
+  font-weight:600; padding:12px 22px; font-size:16px;
+}
+button.primary:hover:not(:disabled){filter:brightness(1.07)}
+button.ghost{background:transparent; border-color:transparent; color:var(--muted); padding:6px 10px}
+button.ghost:hover{color:var(--ink); border-color:var(--line)}
+
+/* ---------- lijst ---------- */
+#listCard{display:none}
+.listhead{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+#clear{padding:6px 12px; font-size:14px; flex:none}
+.count{font-family:Archivo,sans-serif; font-weight:600; font-size:17px}
+.count span{color:var(--muted); font-weight:400; font-size:14px; font-family:"IBM Plex Sans",sans-serif}
+ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+li{
+  display:flex; align-items:center; gap:12px; padding:9px 2px;
+  border-top:1px solid var(--line);
+}
+li:first-child{border-top:none}
+.idx{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted);
+  min-width:24px; font-variant-numeric:tabular-nums;
+}
+.fname{
+  flex:1; min-width:0; display:flex; align-items:baseline; gap:10px;
+  overflow:hidden; white-space:nowrap;
+}
+.wie{font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis}
+.wie.onbekend{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted)}
+.waar{font-size:13.5px; color:var(--muted); flex:none}
+.tag{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em;
+  padding:2px 7px; border-radius:99px; border:1px solid var(--line-strong); color:var(--muted);
+  white-space:nowrap;
+}
+.tag.rot{background:var(--accent-soft); border-color:transparent; color:var(--accent)}
+.tag.same{background:var(--sameday-soft); border-color:transparent; color:var(--sameday)}
+.tag.dub{background:var(--dub-soft); border-color:transparent; color:var(--dub)}
+.pick{width:16px; height:16px; accent-color:var(--accent); flex:none; cursor:pointer; margin:0}
+.pick:disabled{cursor:not-allowed}
+li.uit .fname, li.uit .idx{opacity:.5}
+li.uit .wie{text-decoration:line-through}
+.tag.bad{background:var(--accent-soft); border-color:transparent; color:var(--warn)}
+
+/* ---------- opties ---------- */
+.opts{display:flex; flex-wrap:wrap; gap:22px}
+fieldset{border:0; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+legend{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); padding:0; margin-bottom:2px;
+}
+.seg{display:flex; border:1px solid var(--line-strong); border-radius:8px; overflow:hidden; width:fit-content}
+.seg label{
+  padding:8px 14px; font-size:14.5px; cursor:pointer; background:var(--card);
+  border-left:1px solid var(--line-strong); color:var(--ink-2);
+}
+.seg label:first-of-type{border-left:none}
+.seg input{position:absolute; opacity:0; pointer-events:none}
+.seg input:checked + label{background:var(--ink); color:var(--paper); font-weight:600}
+.seg input:focus-visible + label{outline:2px solid var(--accent); outline-offset:-2px}
+.hint{font-size:13.5px; color:var(--muted); margin:0; max-width:52ch}
+
+/* ---------- actie / resultaat ---------- */
+.actionbar{display:flex; flex-wrap:wrap; align-items:center; gap:14px}
+#status{font-size:14px; color:var(--muted); margin:0}
+#result{
+  display:none; background:var(--ok-soft); border:1px solid var(--ok-line);
+  border-radius:var(--r); padding:20px; flex-direction:column; gap:14px;
+}
+#result.on{display:flex}
+.res-line{font-family:Archivo,sans-serif; font-weight:600; font-size:19px; margin:0}
+.res-line em{font-style:normal; color:var(--ok)}
+#result .hint{color:var(--ink-2)}
+
+/* ---------- uitleg ---------- */
+.steps{display:flex; flex-direction:column; gap:10px; margin:0; padding:0; counter-reset:s}
+.steps li{
+  border:none; padding:0; align-items:flex-start; gap:12px;
+  font-size:14.5px; color:var(--ink-2);
+}
+.steps li::before{
+  counter-increment:s; content:counter(s);
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--accent);
+  border:1px solid var(--accent); border-radius:99px;
+  min-width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+  flex:none; margin-top:2px;
+}
+footer{font-size:13px; color:var(--muted); text-align:center}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Verzendlabels · PostNL</div>
+    <h1>Labelbundel</h1>
+    <div class="barcode" aria-hidden="true"></div>
+    <p class="lead">Sleep alle losse label-PDF's hierin. Je krijgt één PDF terug: alles rechtop gedraaid, meerdere labels per pagina, klaar om te mailen of te appen. Labels die er dubbel in zitten en Ampère Same-day-labels worden herkend en blijven er automatisch buiten.</p>
+  </header>
+
+  <div id="drop">
+    <p class="big">Sleep de PDF's hierheen</p>
+    <p>of een hele map — hij leest zelf uit naar wie elk label gaat</p>
+    <div class="btnrow">
+      <button type="button" id="pickFiles">Bestanden kiezen</button>
+      <button type="button" id="pickFolder">Map kiezen</button>
+    </div>
+    <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden>
+    <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+  </div>
+
+  <div class="card card-pad" id="listCard">
+    <div class="listhead">
+      <div class="count" id="count"></div>
+      <button type="button" id="clear">Lijst leegmaken</button>
+    </div>
+    <ul id="list"></ul>
+    <p class="hint" id="note" style="display:none; margin-top:12px"></p>
+  </div>
+
+  <div class="card card-pad">
+    <p class="card-title">Instellingen</p>
+    <div class="opts">
+      <fieldset>
+        <legend>Labels per pagina</legend>
+        <div class="seg">
+          <input type="radio" name="per" id="per1" value="1"><label for="per1">1</label>
+          <input type="radio" name="per" id="per2" value="2" checked><label for="per2">2</label>
+          <input type="radio" name="per" id="per4" value="4"><label for="per4">4</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Volgorde</legend>
+        <div class="seg">
+          <input type="radio" name="sort" id="sortName" value="name" checked><label for="sortName">Op bestand</label>
+          <input type="radio" name="sort" id="sortTime" value="time"><label for="sortTime">Op tijd</label>
+        </div>
+      </fieldset>
+    </div>
+    <p class="hint" id="perHint" style="margin-top:14px"></p>
+  </div>
+
+  <div class="actionbar">
+    <button type="button" class="primary" id="go" disabled>Bundel tot één PDF</button>
+    <p id="status"></p>
+  </div>
+
+  <div id="result">
+    <p class="res-line" id="resLine"></p>
+    <div class="btnrow" style="justify-content:flex-start">
+      <button type="button" class="primary" id="save">PDF opslaan</button>
+    </div>
+    <p class="hint">Versturen via WhatsApp? Kies bij de paperclip <strong>Document</strong>, niet Foto — anders wordt de barcode gecomprimeerd en soms onleesbaar.</p>
+  </div>
+
+  <div class="card card-pad">
+    <p class="card-title">Werkwijze met z'n tweeën</p>
+    <ol class="steps">
+      <li>Zet de labels van beide computers in dezelfde gedeelde map (Dropbox of Google Drive). Same-day-labels mogen er gerust tussen staan.</li>
+      <li>Open deze pagina, sleep die map hierin en klik op bundelen. De Same-day-labels staan dan uitgevinkt in de lijst.</li>
+      <li>Sla de PDF op en stuur dat ene bestand door.</li>
+    </ol>
+  </div>
+
+  <footer>Alles gebeurt in je eigen browser — er wordt geen enkel label geüpload.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var PDFLib = window.PDFLib;
+  var A4W = 595.28, A4H = 841.89, MARGIN = 14, GAP = 10;
+
+  var items = [];          // {name, time, bytes, pages:[{w,h,rot}], bad:bool}
+  var outBytes = null, outName = "";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var drop = $("drop"), list = $("list"), listCard = $("listCard"),
+      countEl = $("count"), statusEl = $("status"), go = $("go"), note = $("note"),
+      result = $("result"), resLine = $("resLine"), perHint = $("perHint");
+
+  /* ---------- bestanden binnenhalen ---------- */
+
+  function natCmp(a, b){
+    return a.localeCompare(b, "nl", {numeric:true, sensitivity:"base"});
+  }
+
+  async function addFiles(files){
+    var pdfs = Array.prototype.filter.call(files, function(f){
+      return /\.pdf$/i.test(f.name);
+    });
+    var skipped = files.length - pdfs.length;
+    if (!pdfs.length){
+      setStatus(skipped ? "Geen PDF's gevonden — alleen PDF-bestanden werken." : "");
+      return;
+    }
+    setStatus("Bestanden inlezen…");
+    for (var i = 0; i < pdfs.length; i++){
+      var f = pdfs[i];
+      if (items.some(function(it){ return it.name === f.name && it.size === f.size; })) continue;
+      var buf = new Uint8Array(await f.arrayBuffer());
+      var entry = { name:f.name, size:f.size, time:f.lastModified || 0, bytes:buf,
+                    pages:[], bad:false, sameday:false, dubbel:false, include:true,
+                    vinger:await vingerafdruk(buf) };
+      if (items.some(function(it){ return it.vinger === entry.vinger; })) entry.dubbel = true;
+      try {
+        var doc = await PDFLib.PDFDocument.load(buf, {ignoreEncryption:true});
+        doc.getPages().forEach(function(p){
+          var s = p.getSize();
+          var r = ((p.getRotation().angle % 360) + 360) % 360;
+          entry.pages.push({ w:s.width, h:s.height, rot:r });
+        });
+      } catch(e){ entry.bad = true; }
+      if (!entry.bad){
+        entry.sameday = await isSameDay(buf);
+        try {
+          var rns = tekstRuns(doc, 0);
+          entry.pakbon = isPakbon(rns, doc);
+          var ontv = entry.pakbon ? null : ontvangerUit(rns);
+          if (ontv){ entry.naam = ontv.naam; entry.plaats = ontv.plaats; entry.afhaal = ontv.afhaal; }
+        } catch(e){ /* geen leesbare tekst op dit label */ }
+      }
+      entry.include = !entry.bad && !entry.sameday && !entry.dubbel && !entry.pakbon;
+      items.push(entry);
+    }
+    render();
+    setStatus(skipped ? skipped + " bestand(en) overgeslagen (geen PDF)." : "");
+  }
+
+  /* Same-day labels herkennen.
+     PostNL-zegels (bol & Ampère) hebben letters in een eigen font-codering, dus
+     daar is geen tekst uit te lezen. Het Ampère Same-day-label wél: daar staat
+     "Order ID" en een AMPVBSD-code in. Vinden we die, dan is het een same-day
+     label en zetten we hem standaard uit. */
+  async function isSameDay(bytes){
+    if (typeof DecompressionStream === "undefined") return false;
+    var text = latin1(bytes);
+    var pos = 0, budget = 0;
+    while (budget < 6e6){
+      var s = text.indexOf("stream", pos);
+      if (s < 0) break;
+      var d = s + 6;
+      if (text.charCodeAt(d) === 13) d++;
+      if (text.charCodeAt(d) === 10) d++;
+      var e = text.indexOf("endstream", d);
+      if (e < 0) break;
+      pos = e + 9;
+      // witruimte vlak voor "endstream" hoort niet bij de data
+      var end = e;
+      while (end > d && (bytes[end-1] === 10 || bytes[end-1] === 13 || bytes[end-1] === 32)) end--;
+      if (end - d < 40) continue;
+      for (var k = 0; k < 2; k++){
+        try {
+          var chunk = await inflate(bytes.subarray(d, end), k ? "deflate-raw" : "deflate");
+          budget += chunk.length;
+          if (/AMPVBSD|Order ID/i.test(chunk)) return true;
+          break;
+        } catch(err){ /* andere compressie of plaatje: volgende poging/stroom */ }
+      }
+    }
+    return false;
+  }
+
+  /* Vingerafdruk van het bestand: twee keer hetzelfde label downloaden levert
+     bij bol een identiek bestand op, dus gelijke vingerafdruk = dubbel label. */
+  async function vingerafdruk(bytes){
+    try {
+      if (crypto && crypto.subtle){
+        var buf = await crypto.subtle.digest("SHA-256", bytes.slice(0).buffer);
+        var v = new Uint8Array(buf), hex = "";
+        for (var i = 0; i < v.length; i++) hex += v[i].toString(16).padStart(2, "0");
+        return hex;
+      }
+    } catch(e){ /* val terug op de eenvoudige variant */ }
+    var h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (var k = 0; k < bytes.length; k++){
+      h1 = ((h1 ^ bytes[k]) * 16777619) >>> 0;
+      h2 = ((h2 + bytes[k]) * 31 + k) >>> 0;
+    }
+    return bytes.length + "-" + h1.toString(16) + h2.toString(16);
+  }
+
+  function latin1(u8){
+    var out = "", step = 0x8000;
+    for (var i = 0; i < u8.length; i += step){
+      out += String.fromCharCode.apply(null, u8.subarray(i, i + step));
+    }
+    return out;
+  }
+
+  async function inflate(slice, format){
+    var ds = new DecompressionStream(format);
+    var stream = new Blob([slice]).stream().pipeThrough(ds);
+    return await new Response(stream).text();
+  }
+
+  // gesleepte mappen uitlezen
+  function walkEntry(entry, out){
+    return new Promise(function(resolve){
+      if (entry.isFile){
+        entry.file(function(f){ out.push(f); resolve(); }, function(){ resolve(); });
+      } else if (entry.isDirectory){
+        var reader = entry.createReader();
+        var all = [];
+        (function readBatch(){
+          reader.readEntries(function(batch){
+            if (!batch.length){
+              Promise.all(all.map(function(e){ return walkEntry(e, out); })).then(resolve);
+              return;
+            }
+            all = all.concat(batch);
+            readBatch();
+          }, function(){ resolve(); });
+        })();
+      } else resolve();
+    });
+  }
+
+  drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("hot"); });
+  drop.addEventListener("dragleave", function(){ drop.classList.remove("hot"); });
+  drop.addEventListener("drop", async function(e){
+    e.preventDefault(); drop.classList.remove("hot");
+    var dt = e.dataTransfer, out = [];
+    var entries = [];
+    if (dt.items && dt.items.length && dt.items[0].webkitGetAsEntry){
+      for (var i = 0; i < dt.items.length; i++){
+        var en = dt.items[i].webkitGetAsEntry();
+        if (en) entries.push(en);
+      }
+    }
+    if (entries.length){
+      await Promise.all(entries.map(function(en){ return walkEntry(en, out); }));
+      await addFiles(out);
+    } else {
+      await addFiles(dt.files);
+    }
+  });
+
+  $("pickFiles").addEventListener("click", function(){ $("fileInput").click(); });
+  $("pickFolder").addEventListener("click", function(){ $("folderInput").click(); });
+  $("fileInput").addEventListener("change", function(e){ addFiles(e.target.files); e.target.value = ""; });
+  $("folderInput").addEventListener("change", function(e){ addFiles(e.target.files); e.target.value = ""; });
+  $("clear").addEventListener("click", function(){ items = []; reset(); render(); setStatus(""); });
+
+
+  /* ---------- ontvanger van het label lezen ----------
+     De bol/PostNL-zegels en het Ampère Same-day-label bevatten echte tekst.
+     We lezen die uit met de lettertabellen (ToUnicode) uit de PDF zelf, en
+     zoeken daarna het adresblok op: de regel met een postcode die niet van
+     de afzender is, met de naam erboven. Ampère-labels van het type
+     "Shipment _ ..." zijn één afbeelding zonder tekst; daar valt niets te
+     lezen en tonen we het bestelnummer uit de bestandsnaam. */
+
+  var AFZENDER = /2171\s?PT|SASSENHEIM|Dream-Living|Avantius|Rhijnstraat|Afzender/i;
+  var GEENNAAM = /^(POSTNL|AVG|Franco|Naar|Afzender|EIN|Order ID:?|\d+|Ophalen bij.*|Via:.*)$/i;
+
+  function cmapUit(txt){
+    var map = {}, m;
+    var re = /beginbfrange([\s\S]*?)endbfrange/g;
+    while ((m = re.exec(txt))){
+      var r2 = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*(\[([\s\S]*?)\]|<([0-9A-Fa-f]+)>)/g, n;
+      while ((n = r2.exec(m[1]))){
+        var lo = parseInt(n[1], 16), hi = parseInt(n[2], 16);
+        if (n[4] != null){
+          var lijst = n[4].match(/<([0-9A-Fa-f]+)>/g) || [];
+          for (var i = 0; i <= hi - lo && i < lijst.length; i++)
+            map[lo + i] = String.fromCharCode(parseInt(lijst[i].slice(1, -1), 16));
+        } else {
+          var start = parseInt(n[5], 16);
+          for (var j = 0; j <= hi - lo; j++) map[lo + j] = String.fromCharCode(start + j);
+        }
+      }
+    }
+    var re2 = /beginbfchar([\s\S]*?)endbfchar/g;
+    while ((m = re2.exec(txt))){
+      var r3 = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g, k;
+      while ((k = r3.exec(m[1]))) map[parseInt(k[1], 16)] = String.fromCharCode(parseInt(k[2], 16));
+    }
+    return map;
+  }
+
+  function stroomTekst(ctx, ref){
+    try { return latin1(PDFLib.decodePDFRawStream(ctx.lookup(ref)).decode()); }
+    catch(e){ return ""; }
+  }
+
+  function tekstRuns(pdf, index){
+    var page = pdf.getPage(index), ctx = pdf.context, fonts = {};
+    try {
+      var res = page.node.Resources();
+      var fdict = res && res.lookup(PDFLib.PDFName.of("Font"));
+      if (fdict) fdict.entries().forEach(function(entry){
+        var naam = entry[0].asString().replace(/^\//, "");
+        var font = ctx.lookup(entry[1]);
+        if (font && font.get){
+          var tu = font.get(PDFLib.PDFName.of("ToUnicode"));
+          if (tu) fonts[naam] = cmapUit(stroomTekst(ctx, tu));
+        }
+      });
+    } catch(e){ /* geen lettertabellen: dan lezen we ruwe codes */ }
+
+    var stukken = [];
+    try {
+      var inhoud = page.node.Contents();
+      if (inhoud && inhoud.array) inhoud.array.forEach(function(r){ stukken.push(stroomTekst(ctx, r)); });
+      else if (inhoud) stukken.push(stroomTekst(ctx, inhoud));
+    } catch(e){ return []; }
+
+    var stroom = stukken.join("\n"), out = [], m;
+    var re = /BT([\s\S]*?)ET/g;
+    while ((m = re.exec(stroom))){
+      var x = 0, y = 0, font = null;
+      var tokens = m[1].match(/[-\d.]+\s+[-\d.]+\s+(?:Td|TD)|[-\d.]+\s+[-\d.]+\s+[-\d.]+\s+[-\d.]+\s+[-\d.]+\s+[-\d.]+\s+Tm|\/\S+\s+[\d.]+\s+Tf|<[0-9A-Fa-f]*>\s*Tj|\([^)]*\)\s*Tj/g) || [];
+      for (var q = 0; q < tokens.length; q++){
+        var t = tokens[q];
+        var tm = t.match(/^([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+Tm$/);
+        if (tm){ x = parseFloat(tm[5]); y = parseFloat(tm[6]); continue; }
+        var td = t.match(/^([-\d.]+)\s+([-\d.]+)\s+(?:Td|TD)$/);
+        if (td){ x += parseFloat(td[1]); y += parseFloat(td[2]); continue; }
+        var tf = t.match(/^\/(\S+)\s+[\d.]+\s+Tf$/);
+        if (tf){ font = tf[1]; continue; }
+        var map = fonts[font], tekst = "";
+        var lit = t.match(/^\(([\s\S]*)\)\s*Tj$/);
+        if (lit){
+          var ruw = lit[1].replace(/\\([()\\])/g, "$1");
+          for (var c = 0; c < ruw.length; c++){
+            var code = ruw.charCodeAt(c);
+            tekst += (map && map[code] !== undefined) ? map[code] : ruw[c];
+          }
+        } else {
+          var hexen = t.match(/<([0-9A-Fa-f]*)>/g) || [];
+          for (var h = 0; h < hexen.length; h++){
+            var hex = hexen[h].slice(1, -1);
+            for (var i = 0; i + 1 < hex.length; i += 2){
+              var code2 = parseInt(hex.substr(i, 2), 16);
+              tekst += (map && map[code2] !== undefined) ? map[code2] : (map ? "" : String.fromCharCode(code2));
+            }
+          }
+        }
+        if (tekst.trim()) out.push({ x: x, y: y, t: tekst.trim() });
+      }
+    }
+    return out;
+  }
+
+  function netjes(plaats){
+    return plaats.split(/\s+/).map(function(w){
+      if (w.length <= 2) return w.toUpperCase();          // ZH, NB blijven afkortingen
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(" ").replace(/-([a-z])/g, function(_, c){ return "-" + c.toUpperCase(); });
+  }
+
+  function ontvangerUit(runs){
+    if (!runs.length) return null;
+    var steden = runs.filter(function(r){
+      return /^\d{4}\s?[A-Z]{2}\b\s*\S|^\d{4}\s+[A-Z]{2,}/.test(r.t) && !AFZENDER.test(r.t);
+    });
+    if (!steden.length) return null;
+    steden.sort(function(a, b){ return b.y - a.y; });
+    var stad = steden[0];
+
+    var kolom = runs.filter(function(r){
+      return Math.abs(r.x - stad.x) <= 6 && r.y > stad.y && r.y < stad.y + 60 &&
+             !GEENNAAM.test(r.t) && !AFZENDER.test(r.t);
+    }).sort(function(a, b){ return b.y - a.y; });
+    if (!kolom.length) return null;
+
+    // "2201GJ NOORDWIJK" -> Noordwijk, maar "2390 WESTMALLE" (België) niet halveren
+    var plaats = stad.t.replace(/^(\d{4}\s?[A-Z]{2}(?=\s)|\d{4})\s*/, "").trim();
+    // bij een afhaalpunt staat achter de naam nog "(postcode, huisnr)"
+    var naam = kolom[0].t.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    var afhaal = runs.some(function(r){ return /Ophalen bij PostNL/i.test(r.t); });
+    return { naam: naam, plaats: netjes(plaats), afhaal: afhaal };
+  }
+
+  function isPakbon(runs, pdf){
+    var tekst = runs.slice().sort(function(a, b){ return b.y - a.y || a.x - b.x; })
+                    .map(function(r){ return r.t; }).join("");
+    if (/pakbon|packingslip|packing slip/i.test(tekst)) return true;
+    // vangnet: een A4 vol tekst is een pakbon, een label heeft maar een paar regels
+    try {
+      var m = pdf.getPage(0).getSize();
+      return runs.length > 60 &&
+             m.width > 560 && m.width < 620 && m.height > 800 && m.height < 880;
+    } catch(e){ return false; }
+  }
+
+  function kortenaam(bestand){
+    var n = bestand.replace(/\.pdf$/i, "");
+    var m = n.match(/^Shipment\s+_\s*(.+)$/i);
+    if (m) return "Bestelling " + m[1].trim();
+    var p = n.match(/^shipment_(\S+)$/i);
+    if (p) return "Pakbon " + p[1].trim();
+    return n;
+  }
+
+  /* ---------- weergave ---------- */
+
+  function sorted(){
+    var mode = document.querySelector('input[name="sort"]:checked').value;
+    var copy = items.slice();
+    copy.sort(mode === "time"
+      ? function(a,b){ return a.time - b.time || natCmp(a.name,b.name); }
+      : function(a,b){ return natCmp(a.name,b.name); });
+    return copy;
+  }
+
+  function perPage(){ return parseInt(document.querySelector('input[name="per"]:checked').value, 10); }
+
+  function labelCount(){
+    return items.reduce(function(n,it){
+      return n + (it.bad || !it.include ? 0 : it.pages.length);
+    }, 0);
+  }
+
+  function render(){
+    var arr = sorted();
+    listCard.style.display = arr.length ? "block" : "none";
+    list.innerHTML = "";
+    arr.forEach(function(it, i){
+      var li = document.createElement("li");
+      if (!it.include) li.className = "uit";
+
+      var box = document.createElement("input");
+      box.type = "checkbox"; box.className = "pick";
+      box.checked = it.include && !it.bad;
+      box.disabled = it.bad;
+      box.setAttribute("aria-label", "Meenemen: " + it.name);
+      box.addEventListener("change", function(){
+        it.include = box.checked; reset(); render();
+      });
+
+      var idx = document.createElement("span");
+      idx.className = "idx"; idx.textContent = String(i + 1).padStart(2, "0");
+      var nm = document.createElement("span");
+      nm.className = "fname"; nm.title = it.name;
+      if (it.naam){
+        var wie = document.createElement("span");
+        wie.className = "wie"; wie.textContent = it.naam;
+        var waar = document.createElement("span");
+        waar.className = "waar"; waar.textContent = it.plaats;
+        nm.appendChild(wie); nm.appendChild(waar);
+      } else {
+        var onb = document.createElement("span");
+        onb.className = "wie onbekend"; onb.textContent = kortenaam(it.name);
+        nm.appendChild(onb);
+      }
+      li.appendChild(box); li.appendChild(idx); li.appendChild(nm);
+
+      if (it.bad){
+        li.appendChild(tag("onleesbaar", "bad"));
+      } else {
+        if (it.pakbon) li.appendChild(tag("pakbon", "dub"));
+        if (it.afhaal) li.appendChild(tag("afhaalpunt"));
+        if (it.dubbel) li.appendChild(tag("dubbel", "dub"));
+        if (it.sameday) li.appendChild(tag("Same-day", "same"));
+        if (it.pages.length > 1) li.appendChild(tag(it.pages.length + " pag."));
+        if (it.include && it.pages.some(needsTurn)) li.appendChild(tag("wordt gedraaid", "rot"));
+      }
+      var rm = document.createElement("button");
+      rm.className = "ghost"; rm.type = "button"; rm.textContent = "×";
+      rm.setAttribute("aria-label", "Verwijder " + it.name);
+      rm.addEventListener("click", function(){
+        items = items.filter(function(x){ return x !== it; });
+        reset(); render();
+      });
+      li.appendChild(rm);
+      list.appendChild(li);
+    });
+
+    var n = labelCount();
+    var pages = n ? Math.ceil(n / perPage()) : 0;
+    countEl.innerHTML = n + (n === 1 ? " label" : " labels") +
+      ' <span>in de bundel → ' + pages + (pages === 1 ? " pagina" : " pagina's") + "</span>";
+
+    var sd = items.filter(function(it){ return it.sameday && !it.include; }).length;
+    var db = items.filter(function(it){ return it.dubbel && !it.include; }).length;
+    var pb = items.filter(function(it){ return it.pakbon && !it.include; }).length;
+    var regels = [];
+    if (pb) regels.push(pb === 1 ? "1 pakbon blijft erbuiten." : pb + " pakbonnen blijven erbuiten.");
+    if (db) regels.push(db === 1
+      ? "1 label zat er twee keer in en telt maar één keer mee."
+      : db + " labels zaten er dubbel in en tellen maar één keer mee.");
+    if (sd) regels.push(sd + (sd === 1 ? " Same-day label blijft" : " Same-day labels blijven") + " erbuiten.");
+    if (regels.length) regels.push("Wil je er toch één mee? Vink hem dan aan.");
+    note.textContent = regels.join(" ");
+    note.style.display = regels.length ? "block" : "none";
+
+    go.disabled = n === 0;
+    updateHint();
+  }
+
+  function tag(text, cls){
+    var s = document.createElement("span");
+    s.className = "tag" + (cls ? " " + cls : "");
+    s.textContent = text;
+    return s;
+  }
+
+  function needsTurn(p){
+    var w = p.w, h = p.h;
+    if (p.rot === 90 || p.rot === 270){ var t = w; w = h; h = t; }
+    return h > w;
+  }
+
+  function updateHint(){
+    var per = perPage();
+    perHint.textContent = per === 1
+      ? "Eén label per A4 (liggend) — grootste barcode, maar ook het meeste bladeren."
+      : per === 2
+        ? "Twee labels per A4. Barcodes blijven vrijwel op ware grootte; scant het betrouwbaarst."
+        : "Vier labels per A4 (liggend) — ruim half zo groot. Laat de scanner dit één keer testen voor je een grote batch stuurt.";
+  }
+
+  document.querySelectorAll('input[name="per"], input[name="sort"]').forEach(function(el){
+    el.addEventListener("change", function(){ reset(); render(); });
+  });
+
+  function setStatus(t){ statusEl.textContent = t || ""; }
+  function reset(){ outBytes = null; result.classList.remove("on"); }
+
+  /* ---------- bundelen ---------- */
+
+  go.addEventListener("click", async function(){
+    go.disabled = true; reset();
+    setStatus("Bezig met bundelen…");
+    try {
+      var res = await bundle();
+      outBytes = res.bytes; outName = res.name;
+      resLine.innerHTML = "Klaar: <em>" + res.labels + " labels</em> op " +
+        res.pages + (res.pages === 1 ? " pagina" : " pagina's") + ".";
+      result.classList.add("on");
+      setStatus("");
+    } catch(err){
+      setStatus("Er ging iets mis bij het bundelen: " + (err && err.message ? err.message : err));
+    }
+    go.disabled = labelCount() === 0;
+  });
+
+  async function bundle(){
+    var out = await PDFLib.PDFDocument.create();
+    var units = [];
+
+    var arr = sorted();
+    for (var i = 0; i < arr.length; i++){
+      var it = arr[i];
+      if (it.bad || !it.include) continue;
+      var src = await PDFLib.PDFDocument.load(it.bytes, {ignoreEncryption:true});
+      var idx = src.getPageIndices();
+      var embedded = await out.embedPdf(it.bytes, idx);
+      for (var j = 0; j < embedded.length; j++){
+        var info = it.pages[idx[j]];
+        units.push({ e: embedded[j], base: info.rot, extra: needsTurn(info) ? 270 : 0 });
+      }
+    }
+
+    // liggende labels vullen een A4 het best in deze indelingen
+    var per = perPage();
+    var cols = per === 4 ? 2 : 1;
+    var rows = per === 4 ? 2 : per;
+    var landscape = (per !== 2);                 // 1 en 4 per pagina: A4 liggend
+    var pw = landscape ? A4H : A4W, ph = landscape ? A4W : A4H;
+    var cellW = (pw - 2*MARGIN - (cols-1)*GAP) / cols;
+    var cellH = (ph - 2*MARGIN - (rows-1)*GAP) / rows;
+
+    for (var s = 0; s < units.length; s += per){
+      var page = out.addPage([pw, ph]);
+      units.slice(s, s + per).forEach(function(u, k){
+        var c = k % cols, r = Math.floor(k / cols);
+        var x0 = MARGIN + c * (cellW + GAP);
+        var y0 = (ph - MARGIN - r * (cellH + GAP)) - cellH;
+
+        var rot = (u.base + u.extra) % 360;
+        var dw = u.e.width, dh = u.e.height;
+        if (rot === 90 || rot === 270){ dw = u.e.height; dh = u.e.width; }
+
+        var scale = Math.min(cellW / dw, cellH / dh);
+        var fw = dw * scale, fh = dh * scale;
+        var fx = x0 + (cellW - fw) / 2;
+        var fy = y0 + (cellH - fh) / 2;
+
+        var ax = fx, ay = fy;
+        if (rot === 90){ ax = fx + fw; }
+        else if (rot === 180){ ax = fx + fw; ay = fy + fh; }
+        else if (rot === 270){ ay = fy + fh; }
+
+        page.drawPage(u.e, { x:ax, y:ay, xScale:scale, yScale:scale, rotate:PDFLib.degrees(rot) });
+        page.drawRectangle({ x:fx, y:fy, width:fw, height:fh,
+          borderColor: PDFLib.rgb(0.78, 0.78, 0.78), borderWidth:0.4 });
+      });
+    }
+
+    var d = new Date();
+    var name = "verzendlabels-" + d.getFullYear() + "-" +
+      String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0") + ".pdf";
+
+    return { bytes: await out.save(), name: name, labels: units.length, pages: out.getPageCount() };
+  }
+
+  /* ---------- opslaan ---------- */
+
+  $("save").addEventListener("click", async function(){
+    if (!outBytes) return;
+    var saver = null;
+    try {
+      if (window.claude && typeof window.claude.use === "function"){
+        saver = await window.claude.use("downloads");
+      }
+    } catch(e){ saver = null; }
+
+    if (saver){
+      try {
+        await saver.save({ filename: outName, data: outBytes.slice(0) });
+        setStatus("Opgeslagen als " + outName + ".");
+      } catch(err){
+        var code = err && err.code;
+        setStatus(code === "declined" ? "Opslaan geannuleerd."
+          : code === "too_large" ? "De PDF is te groot om zo op te slaan — bundel in twee delen."
+          : "Opslaan lukte niet. Probeer het nog een keer.");
+      }
+      return;
+    }
+
+    var blob = new Blob([outBytes], {type:"application/pdf"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = outName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    setStatus("Opgeslagen als " + outName + ".");
+  });
+
+  updateHint();
+})();
+</script>
+</body>
+</html>
