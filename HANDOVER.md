@@ -23,8 +23,9 @@ Het programma is gemaakt in de gewone Claude-chat en op 29 augustus 2026 naar
 Claude Code verhuisd. Reden: het stond alleen op deze PC. Nu staat het op
 GitHub, dus bij een kapotte of nieuwe PC is het er gewoon weer.
 
-Vanaf nu loopt alle communicatie over Labelbundel via deze Claude Code-chat.
-De oude chat in de gewone Claude mag weg zodra het vanaf GitHub goed werkt.
+Op 29 augustus 2026 getest vanaf het webadres: werkt goed. De oude chat in de
+gewone Claude is daarna verwijderd. Alle communicatie over Labelbundel loopt
+vanaf nu via deze Claude Code-chat.
 
 ## Nieuwe PC — zo haal je het terug
 
