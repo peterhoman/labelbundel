@@ -19,7 +19,7 @@ if not exist "%BRON%" goto geenmap
 
 set /a AANTAL=0
 pushd "%BRON%"
-for /f "delims=" %%F in ('dir /b /a-d "verzendzegel-*.pdf" "Shipment _*.pdf" 2^>nul') do call :verplaats "%%F"
+for /f "delims=" %%F in ('dir /b /a-d "verzendzegel-*.pdf" "Shipment _*.pdf" "Shipping_Label-*.pdf" 2^>nul') do call :verplaats "%%F"
 popd
 
 REM Windows markeert gedownloade bestanden als "afkomstig van internet",

@@ -43,9 +43,14 @@ uit de bestandsnaam.
 ## Het opruimknopje
 
 `Verzendlabels opruimen.bat` verplaatst alle bestanden uit Downloads die
-beginnen met `verzendzegel-` of `Shipment _ ` naar de gedeelde map. Andere
-downloads blijven staan — ook pakbonnen, want die heten `shipment_ship...`
-zonder spatie.
+beginnen met `verzendzegel-`, `Shipment _ ` of `Shipping_Label-` naar de
+gedeelde map. Andere downloads blijven staan — ook pakbonnen, want die heten
+`shipment_ship...` zonder spatie.
+
+`Shipping_Label-` is het label dat je krijgt via het kleine **Label**-knopje in
+DeliveryMatch, bij de barcode onder *Packages*. Chrome moet dan wel op
+*PDF's downloaden* staan (`chrome://settings/content/pdfDocuments`), anders
+opent hij het label in een tabblad in plaats van het te downloaden.
 
 De doelmap staat bovenin het bestand:
 
