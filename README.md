@@ -36,9 +36,14 @@ de barcodes blijven dan vrijwel op ware grootte en scannen het betrouwbaarst.
 Alles is per label met een vinkje om te zetten, mocht het een keer misgaan.
 
 De naam en plaats van de ontvanger worden uit het label gelezen, zodat je in de
-lijst ziet naar wie elk pakket gaat. Bij labels die `Shipment _ ...` heten lukt
-dat niet: dat zijn afbeeldingen zonder tekst. Daar toont hij het bestelnummer
-uit de bestandsnaam.
+lijst ziet naar wie elk pakket gaat. Bij labels uit DeliveryMatch lukt dat niet:
+die zijn met Labelary gemaakt en bestaan uit één afbeelding zonder tekst. Daar
+valt niets uit te lezen — ook niet uit de PDF-eigenschappen. Voor die labels
+toont hij wat wél in de bestandsnaam staat:
+
+- `Shipment _ 26-47509` → **Bestelling 26-47509**
+- `Shipping_Label-3SCSXY...` → **Track 3SCSXY...**, met één klik te kopiëren.
+  Dat nummer plak je in DeliveryMatch bij *Search shipment* om te zien wie het is.
 
 ## Het opruimknopje
 

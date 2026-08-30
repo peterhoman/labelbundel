@@ -145,6 +145,12 @@ li:first-child{border-top:none}
 .wie{font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis}
 .wie.onbekend{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted)}
 .waar{font-size:13.5px; color:var(--muted); flex:none}
+.wie.track{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted);
+  background:none; border:0; padding:0; margin:0; cursor:pointer; text-align:left;
+  display:flex; gap:8px; align-items:baseline}
+.wie.track:hover{color:var(--ink)}
+.wie.track b{font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase}
+.wie.track.ok{color:var(--accent)}
 .tag{
   font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em;
   padding:2px 7px; border-radius:99px; border:1px solid var(--line-strong); color:var(--muted);
@@ -613,6 +619,31 @@ footer{font-size:13px; color:var(--muted); text-align:center}
     return n;
   }
 
+  /* Labels uit DeliveryMatch heten Shipping_Label-<trackingnummer>.pdf. Er zit
+     geen tekst in die labels (Labelary maakt er een plaatje van), dus het
+     trackingnummer uit de naam is het enige houvast. */
+  function tracknummer(bestand){
+    var n = bestand.replace(/\.pdf$/i, "");
+    var m = n.match(/^Shipping_Label-(\S+?)(?:\s*\(\d+\))?$/i);
+    return m ? m[1] : null;
+  }
+
+  function kopieer(tekst, klaar){
+    var vangnet = function(){
+      try {
+        var t = document.createElement("textarea");
+        t.value = tekst; t.setAttribute("readonly", "");
+        t.style.position = "fixed"; t.style.top = "-1000px";
+        document.body.appendChild(t); t.select();
+        var ok = document.execCommand("copy");
+        document.body.removeChild(t); klaar(ok);
+      } catch(e){ klaar(false); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(tekst).then(function(){ klaar(true); }, vangnet);
+    } else vangnet();
+  }
+
   /* ---------- weergave ---------- */
 
   function sorted(){
@@ -660,9 +691,29 @@ footer{font-size:13px; color:var(--muted); text-align:center}
         waar.className = "waar"; waar.textContent = it.plaats;
         nm.appendChild(wie); nm.appendChild(waar);
       } else {
-        var onb = document.createElement("span");
-        onb.className = "wie onbekend"; onb.textContent = kortenaam(it.name);
-        nm.appendChild(onb);
+        var track = tracknummer(it.name);
+        if (track){
+          var knop = document.createElement("button");
+          knop.type = "button"; knop.className = "wie track";
+          knop.title = "Klik om " + track + " te kopieren";
+          var kop = document.createElement("b"); kop.textContent = "Track";
+          var nr = document.createElement("span"); nr.textContent = track;
+          knop.appendChild(kop); knop.appendChild(nr);
+          knop.addEventListener("click", function(){
+            kopieer(track, function(ok){
+              kop.textContent = ok ? "gekopieerd" : "kopieren lukt niet";
+              if (ok) knop.classList.add("ok");
+              setTimeout(function(){
+                kop.textContent = "Track"; knop.classList.remove("ok");
+              }, 1500);
+            });
+          });
+          nm.appendChild(knop);
+        } else {
+          var onb = document.createElement("span");
+          onb.className = "wie onbekend"; onb.textContent = kortenaam(it.name);
+          nm.appendChild(onb);
+        }
       }
       li.appendChild(box); li.appendChild(idx); li.appendChild(nm);
 
