@@ -1,6 +1,6 @@
 # Overdracht — Labelbundel
 
-Bijgewerkt: 29 augustus 2026
+Bijgewerkt: 30 augustus 2026
 
 ## Waar staat wat
 
@@ -39,6 +39,18 @@ daar is helemaal niets voor nodig.
 Let op: `Verzendlabels opruimen.bat` verwijst naar
 `%USERPROFILE%\Dropbox\#####verzendlabels`. Op een nieuwe PC moet Dropbox er
 dus staan, of dat pad bovenin het bat-bestand aangepast worden.
+
+## Labels uit DeliveryMatch (eigen website)
+
+De grote groene **Print label**-knop print direct; daar komt geen bestand van.
+Gebruik in plaats daarvan het kleine **Label**-knopje onderaan bij de barcode
+(onder *Packages*). Dat levert `Shipping_Label-<barcode>.pdf`.
+
+Voorwaarde: Chrome moet PDF's downloaden in plaats van openen. Ingesteld op
+30 augustus 2026 via `chrome://settings/content/pdfDocuments`. Op een nieuwe PC
+moet dat opnieuw.
+
+Het opruimknopje herkent `Shipping_Label-` sinds 30 augustus 2026.
 
 ## Openstaand
 
