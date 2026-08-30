@@ -52,6 +52,27 @@ moet dat opnieuw.
 
 Het opruimknopje herkent `Shipping_Label-` sinds 30 augustus 2026.
 
+Omdat Chrome nu downloadt in plaats van opent, is **Edge** ingesteld als vaste
+PDF-opener in Windows. Dubbelklikken op een PDF opent Edge, printen met Ctrl+P.
+Op een nieuwe PC moet dat opnieuw ingesteld worden.
+
+**De naam van de ontvanger is bij deze labels niet te lezen.** DeliveryMatch
+maakt ze met Labelary: één afbeelding, geen tekst, ook niet in de
+PDF-eigenschappen. Nagelopen op 30 augustus 2026 — Printer Settings biedt alleen
+PDF of PrintNode, More options heeft geen download, en Export gaat over
+vervoerder-instellingen. De tool toont daarom het trackingnummer met een
+kopieerknop. Dat nummer plak je in DeliveryMatch bij *Search shipment*.
+
+## Let op bij Select & print
+
+De knop **Print Selected** op de pagina *Select & print* **boekt de zendingen
+direct**. Daar betaal je voor, ook als je ze niet verstuurt. Niet gebruiken om
+even iets uit te proberen.
+
+Op 30 augustus 2026 zijn er zo twee per ongeluk geboekt. Welke dat waren staat
+in DeliveryMatch zelf — niet hier, want deze repo is openbaar en er horen geen
+klantgegevens in.
+
 ## Openstaand
 
 - Niets.
