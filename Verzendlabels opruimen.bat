@@ -14,6 +14,27 @@ REM ============================================================
 set "BRON=%USERPROFILE%\Downloads"
 set "DOEL=%USERPROFILE%\Dropbox\#####verzendlabels"
 
+REM ------------------------------------------------------------
+REM  Dropbox blijft op deze PC niet uit zichzelf draaien: hij
+REM  start wel mee met Windows, maar valt daarna weer stil. Dan
+REM  komen de labels van een ander niet binnen. Daarom kijken we
+REM  eerst of hij draait en starten we hem anders alsnog.
+REM  Vastgesteld op 22 september 2026, zie HANDOVER.md.
+REM ------------------------------------------------------------
+set "DBX=%ProgramFiles(x86)%\Dropbox\Client\Dropbox.exe"
+if not exist "%DBX%" set "DBX=%ProgramFiles%\Dropbox\Client\Dropbox.exe"
+
+REM  Volledige paden, anders pakt Windows soms een gelijknamig
+REM  hulpprogramma van een ander programma dat in het PATH staat.
+"%SystemRoot%\System32\tasklist.exe" /fi "imagename eq Dropbox.exe" /nh 2>nul | "%SystemRoot%\System32\find.exe" /i "Dropbox.exe" >nul
+if not errorlevel 1 goto dropboxdraait
+if not exist "%DBX%" goto dropboxdraait
+echo.
+echo   Dropbox stond uit. Hij wordt gestart - even geduld...
+start "" "%DBX%"
+timeout /t 25 >nul
+:dropboxdraait
+
 if not exist "%DOEL%" mkdir "%DOEL%"
 if not exist "%BRON%" goto geenmap
 

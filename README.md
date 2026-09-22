@@ -66,6 +66,10 @@ set "DOEL=%USERPROFILE%\Dropbox\#####verzendlabels"
 Het script haalt ook het "afkomstig van internet"-vlaggetje weg, zodat Verkenner
 een voorbeeld van de labels laat zien.
 
+Voordat het gaat verplaatsen kijkt het eerst of **Dropbox draait**, en start het
+Dropbox anders alsnog. Zonder draaiende Dropbox komen labels van een ander
+namelijk niet binnen. Zie [HANDOVER.md](HANDOVER.md).
+
 ## Op een webadres zetten
 
 Met GitHub Pages krijgt `index.html` een eigen adres, zodat iedereen de tool kan

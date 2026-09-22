@@ -73,6 +73,47 @@ Op 30 augustus 2026 zijn er zo twee per ongeluk geboekt. Welke dat waren staat
 in DeliveryMatch zelf — niet hier, want deze repo is openbaar en er horen geen
 klantgegevens in.
 
+## Dropbox valt stil (22 september 2026)
+
+Labels van een ander kwamen niet binnen. Oorzaak: **Dropbox draaide niet**.
+Zolang het programma uit staat gebeurt er niets, in geen van beide richtingen.
+
+Wat is nagekeken:
+
+- Dropbox staat wél goed ingesteld om mee te starten met Windows:
+  `HKLM\Software\Wow6432Node\...\Run` → `Dropbox.exe /systemstartup`, en die
+  regel staat op AAN. Let op: **niet** in de Run-sleutel van de gebruiker, daar
+  is hij bewust niet te vinden.
+- Toch blijft hij niet draaien. Op 22 september draaide hij rond 14:56, haalde
+  alles op, en was daarna weer weg. Geen crashrapport. **Waaróm hij stilvalt is
+  niet gevonden.**
+
+Oplossing: `Verzendlabels opruimen.bat` kijkt nu eerst of Dropbox draait en
+start hem anders alsnog, met 25 seconden wachttijd. Dat knopje gaat toch altijd
+vooraf aan het bundelen, dus Dropbox staat aan precies wanneer het nodig is.
+
+In dat script staan volledige paden (`%SystemRoot%\System32\tasklist.exe` en
+`find.exe`). Zonder die paden pakte Windows een gelijknamig Unix-hulpprogramma
+uit het PATH en klopte de uitkomst niet.
+
+## Bitdefender
+
+Bitdefenders gedragsbewaking (Advanced Threat Defense, meldingsnaam
+`Atc4.Detection`) greep op 22 september in toen er automatisch een
+snelkoppeling in de opstartmap werd gezet. Die snelkoppeling én een
+Dropbox-bestandje (`AppData\Local\Dropbox\metrics\store.bin`) gingen in
+quarantaine, en Dropbox werd afgekapt. Allebei zijn ze gewist; `store.bin`
+maakt Dropbox vanzelf opnieuw aan.
+
+**Maak op deze PC geen opstartsnelkoppelingen aan via een script.** Bitdefender
+ziet dat als verdacht gedrag en haalt ze binnen seconden weg.
+
+Er staat sinds 22 september één uitzondering in Bitdefender:
+`C:\Program Files (x86)\Dropbox\Client\Dropbox.exe`, alleen voor **Advanced
+Threat Defense**. De gewone virusscan blijft op Dropbox van toepassing. Dit is
+gedaan zodat het starten vanuit het bat-bestand niet wordt geblokkeerd.
+
 ## Openstaand
 
-- Niets.
+- Waarom Dropbox uit zichzelf stopt met draaien, is niet achterhaald. Het
+  bat-bestand vangt het op, maar de onderliggende oorzaak staat nog open.
