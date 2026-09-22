@@ -24,11 +24,16 @@ REM ------------------------------------------------------------
 set "DBX=%ProgramFiles(x86)%\Dropbox\Client\Dropbox.exe"
 if not exist "%DBX%" set "DBX=%ProgramFiles%\Dropbox\Client\Dropbox.exe"
 
-REM  Volledige paden, anders pakt Windows soms een gelijknamig
-REM  hulpprogramma van een ander programma dat in het PATH staat.
-"%SystemRoot%\System32\tasklist.exe" /fi "imagename eq Dropbox.exe" /nh 2>nul | "%SystemRoot%\System32\find.exe" /i "Dropbox.exe" >nul
-if not errorlevel 1 goto dropboxdraait
-if not exist "%DBX%" goto dropboxdraait
+if not exist "%DBX%" goto dropboxklaar
+
+REM  Een net afgesloten Dropbox hangt nog een paar seconden in de
+REM  processenlijst. Zonder deze pauze denkt het script dat hij draait
+REM  en slaat het starten ten onrechte over.
+timeout /t 4 >nul
+
+call :draaitdropbox
+if not errorlevel 1 goto dropboxklaar
+
 echo.
 echo   Dropbox stond uit. Hij wordt gestart - even geduld...
 REM  Dropbox blijft in dit venster schrijven zolang hij eraan vastzit,
@@ -38,9 +43,18 @@ REM  debug.log achter in de labelmap.
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%DBX%' -WorkingDirectory (Split-Path '%DBX%')" >nul 2>&1
 timeout /t 25 >nul
 cls
+
+REM  Niet zomaar melden dat het gelukt is - eerst kijken of hij er ook
+REM  echt staat.
+call :draaitdropbox
 echo.
-echo   Dropbox is gestart.
-:dropboxdraait
+if errorlevel 1 (
+  echo   LET OP: Dropbox kon niet worden gestart. Start hem zelf,
+  echo   anders komen labels van een ander niet binnen.
+) else (
+  echo   Dropbox is gestart.
+)
+:dropboxklaar
 
 if not exist "%DOEL%" mkdir "%DOEL%"
 if not exist "%BRON%" goto geenmap
@@ -66,6 +80,13 @@ echo.
 start "" "%DOEL%"
 timeout /t 5 >nul
 exit /b
+
+REM  Draait Dropbox? Volledige paden gebruiken, anders pakt Windows soms
+REM  een gelijknamig hulpprogramma dat via het PATH voorrang krijgt.
+:draaitdropbox
+"%SystemRoot%\System32\tasklist.exe" /fi "imagename eq Dropbox.exe" /nh 2>nul | "%SystemRoot%\System32\find.exe" /i "Dropbox.exe" >nul
+if errorlevel 1 exit /b 1
+exit /b 0
 
 :verplaats
 set "BESTAND=%BRON%\%~1"
