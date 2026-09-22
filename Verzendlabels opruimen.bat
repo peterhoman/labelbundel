@@ -31,10 +31,11 @@ if not errorlevel 1 goto dropboxdraait
 if not exist "%DBX%" goto dropboxdraait
 echo.
 echo   Dropbox stond uit. Hij wordt gestart - even geduld...
-REM  Dropbox schrijft zijn eigen technische meldingen naar dit venster.
-REM  Die gooien we weg, anders lijkt het op een foutmelding. Het scherm
-REM  wordt daarna nog een keer leeggemaakt voor wat er toch doorheen komt.
-start "" "%DBX%" >nul 2>&1
+REM  Dropbox blijft in dit venster schrijven zolang hij eraan vastzit,
+REM  ook nadat dit script klaar is. Daarom starten we hem los van dit
+REM  venster, met zijn eigen werkmap - anders laat hij ook nog een
+REM  debug.log achter in de labelmap.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%DBX%' -WorkingDirectory (Split-Path '%DBX%')" >nul 2>&1
 timeout /t 25 >nul
 cls
 echo.
