@@ -132,9 +132,22 @@ gedaan zodat het starten vanuit het bat-bestand niet wordt geblokkeerd.
 - Waarom Dropbox uit zichzelf stopt met draaien, is niet achterhaald. Het
   bat-bestand vangt het op, maar de onderliggende oorzaak staat nog open.
 
-  Aanwijzing gevonden op 22 september: Dropbox schreef een `debug.log` met
-  `Crashpad lib path is empty` en `Cannot load add_simple_annotations
-  function`. Dat betekent dat Dropbox' eigen crashrapportage niet werkt — en
-  verklaart waarom er bij het stilvallen geen crashrapport achterblijft. Het
-  wijst op een beschadigde of half bijgewerkte Dropbox-installatie. Blijft het
-  terugkomen, dan is Dropbox opnieuw installeren de volgende stap.
+  **Opnieuw installeren is niet de volgende stap.** Op 22 september nagekeken:
+
+  - Geen enkele Dropbox-crash in het Windows-logboek over veertien dagen
+  - Maar één afsluitmelding in `AppData\Local\Dropbox\QuitReports`, en die was
+    van de handmatige test van die middag
+  - De PC stond op dat moment ruim vier dagen aan zonder herstart
+
+  Dropbox crasht dus niet, hij wordt netjes afgesloten. Een herinstallatie
+  repareert beschadigde bestanden en lost dat niet op.
+
+  Er stond eerder een `debug.log` met `Crashpad lib path is empty`. Dat leek
+  op een beschadigde installatie, maar die meldingen komen uit de
+  Explorer-koppeling van Dropbox en zijn op zichzelf onschuldig.
+
+  Aanpak: **afwachten en tellen.** Het opruimknopje meldt voortaan zelf
+  "Dropbox stond uit". Gebeurt dat dagelijks, dan is er iets structureels en
+  is verder zoeken de moeite waard. Gebeurt het zelden, dan volstaat wat er nu
+  staat. Een wekelijkse herstart van de PC helpt sowieso: dan pakt Dropbox
+  zijn normale automatische start weer op.
