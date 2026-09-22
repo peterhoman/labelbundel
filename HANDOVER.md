@@ -92,6 +92,20 @@ Oplossing: `Verzendlabels opruimen.bat` kijkt nu eerst of Dropbox draait en
 start hem anders alsnog, met 25 seconden wachttijd. Dat knopje gaat toch altijd
 vooraf aan het bundelen, dus Dropbox staat aan precies wanneer het nodig is.
 
+Drie dingen in dat script zijn met opzet zo, niet per ongeluk:
+
+- **Eerst 4 seconden wachten** voor de controle. Een net afgesloten Dropbox
+  blijft nog even in de processenlijst staan; zonder die pauze concludeert het
+  script ten onrechte "draait al" en slaat het starten over.
+- **Starten via PowerShell `Start-Process` met `-WorkingDirectory`**, niet met
+  `start`. Anders blijft Dropbox in het zwarte venster schrijven, ook nadat het
+  script klaar is, en laat hij een `debug.log` achter in de labelmap.
+- **Achteraf opnieuw controleren.** Lukt het starten niet, dan zegt het script
+  dat, in plaats van te melden dat alles goed ging.
+
+Getest op 22 september 2026: met Dropbox uit meldt hij "Dropbox is gestart" en
+loopt daarna gewoon door.
+
 In dat script staan volledige paden (`%SystemRoot%\System32\tasklist.exe` en
 `find.exe`). Zonder die paden pakte Windows een gelijknamig Unix-hulpprogramma
 uit het PATH en klopte de uitkomst niet.
