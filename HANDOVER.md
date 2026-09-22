@@ -117,3 +117,10 @@ gedaan zodat het starten vanuit het bat-bestand niet wordt geblokkeerd.
 
 - Waarom Dropbox uit zichzelf stopt met draaien, is niet achterhaald. Het
   bat-bestand vangt het op, maar de onderliggende oorzaak staat nog open.
+
+  Aanwijzing gevonden op 22 september: Dropbox schreef een `debug.log` met
+  `Crashpad lib path is empty` en `Cannot load add_simple_annotations
+  function`. Dat betekent dat Dropbox' eigen crashrapportage niet werkt — en
+  verklaart waarom er bij het stilvallen geen crashrapport achterblijft. Het
+  wijst op een beschadigde of half bijgewerkte Dropbox-installatie. Blijft het
+  terugkomen, dan is Dropbox opnieuw installeren de volgende stap.
