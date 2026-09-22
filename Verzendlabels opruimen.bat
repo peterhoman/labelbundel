@@ -31,8 +31,14 @@ if not errorlevel 1 goto dropboxdraait
 if not exist "%DBX%" goto dropboxdraait
 echo.
 echo   Dropbox stond uit. Hij wordt gestart - even geduld...
-start "" "%DBX%"
+REM  Dropbox schrijft zijn eigen technische meldingen naar dit venster.
+REM  Die gooien we weg, anders lijkt het op een foutmelding. Het scherm
+REM  wordt daarna nog een keer leeggemaakt voor wat er toch doorheen komt.
+start "" "%DBX%" >nul 2>&1
 timeout /t 25 >nul
+cls
+echo.
+echo   Dropbox is gestart.
 :dropboxdraait
 
 if not exist "%DOEL%" mkdir "%DOEL%"
