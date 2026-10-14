@@ -110,6 +110,29 @@ In dat script staan volledige paden (`%SystemRoot%\System32\tasklist.exe` en
 `find.exe`). Zonder die paden pakte Windows een gelijknamig Unix-hulpprogramma
 uit het PATH en klopte de uitkomst niet.
 
+## Als labels van de andere PC niet binnenkomen
+
+Eerst kijken wie het probleem heeft. Groene vinkjes in Verkenner betekenen
+"klaar", blauwe rondjes "nog bezig". Blijven ze bij de ander blauw, dan zit het
+daar en valt er aan deze kant niets te halen.
+
+**Noodoplossing, werkt altijd:** op de PC waar de labels staan naar
+[dropbox.com](https://www.dropbox.com/home) gaan, doorklikken naar de dagmap,
+en met de knop **Uploaden → Bestanden** de labels van de harde schijf kiezen.
+Ze staan dan binnen een minuut aan de andere kant. Dit gaat volledig om het
+vastgelopen programma heen.
+
+Let op: kies in dat venster bestanden van de **schijf**, niet de bestanden die
+al op de website staan — die zijn er immers al.
+
+Op 14 oktober 2026 zo acht labels overgezet toen Dropbox op de andere PC bleef
+hangen op "11 bestanden indexeren". Herstarten van die PC hielp niet.
+
+Volgorde om zo'n vastgelopen Dropbox te repareren, van makkelijk naar
+ingrijpend: vrije schijfruimte en Dropbox-opslag nakijken, dan de virusscanner,
+dan de index van Dropbox weggooien zodat hij opnieuw opbouwt, en pas daarna
+opnieuw installeren.
+
 ## Bitdefender
 
 Bitdefenders gedragsbewaking (Advanced Threat Defense, meldingsnaam
